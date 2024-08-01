@@ -1,6 +1,8 @@
 import requests
 import re
 import pandas as pd
+from bs4 import BeautifulSoup
+from lxml import etree
 import constants as c
 
 def map_rating(rating):
@@ -12,18 +14,19 @@ def clean_price(price):
 
 def extract_book_data(element):
     # Get title
-    title = element.find('h3').find('a')['title']
+    title = element.find(c.TITLE_XPATH).attrib['title']
+
     # Get price
-    price = clean_price(element.find('div', attrs={'class': 'product_price'}).find('p').text)
+    price = clean_price(element.find(c.PRICE_XPATH).text)
+
     # Get rating
-    rating = element.find('p', attrs={'class': 'star-rating'})['class'][-1]
-    ratingInt = map_rating(rating)
+    rating = map_rating(element.xpath(c.RATING_XPATH)[0].attrib['class'].split(' ')[-1])
 
     # Create book dictionary
     return {
         'title' : title,
         'price' : price,
-        'rating' : ratingInt
+        'rating' : rating
     }
 
 def open_url():
@@ -31,6 +34,15 @@ def open_url():
     resp = requests.get(c.URL)
     print('Response Status Code: %d' % resp.status_code)
     return resp
+
+def get_element_list(resp):
+    soup  = BeautifulSoup(resp.content, 'html.parser')
+    dom = etree.HTML(str(soup))
+
+    # Get books elements list
+    print('Finding all books elements ...')
+    return dom.xpath(c.BOOK_ELEMENT_XPATH)
+
 
 def export_to_csv(booksList):
     # Output to a CSV file
