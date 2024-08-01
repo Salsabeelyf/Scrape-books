@@ -1,20 +1,10 @@
 import requests
-from bs4 import BeautifulSoup
 import re
 import pandas as pd
-
-url = 'http://books.toscrape.com/'
+import constants as c
 
 def map_rating(rating):
-    rating_map = {
-        'One': 1,
-        'Two': 2,
-        'Three': 3,
-        'Four': 4,
-        'Five': 5
-    }
-
-    return rating_map[rating]
+    return c.RATING_MAP[rating]
 
 def clean_price(price):
     price = re.sub("[^0-9.]","", price)
@@ -36,20 +26,14 @@ def extract_book_data(element):
         'rating' : ratingInt
     }
 
-resp = requests.get(url)
+def open_url():
+    print('Sending request to %s ...' % c.URL)
+    resp = requests.get(c.URL)
+    print('Response Status Code: %d' % resp.status_code)
+    return resp
 
-print(resp.status_code)
-
-booksList  = []
-
-if(resp.status_code == 200):
-    soup  = BeautifulSoup(resp.content, 'html.parser')
-
-    # Get books elements list
-    elementsList = soup.find_all('article', attrs={'class':'product_pod'})
-
-    # Store books as a list
-    booksList = [extract_book_data(element) for element in elementsList]
-
+def export_to_csv(booksList):
+    # Output to a CSV file
+    print('Exporting books to %s ...' % c.FILE_NAME)
     df = pd.DataFrame(booksList)
-    df.to_csv('books.csv', index=False)
+    df.to_csv(c.FILE_NAME, index=False)
