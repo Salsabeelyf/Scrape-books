@@ -1,7 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 import re
-
+import pandas as pd
 
 url = 'http://books.toscrape.com/'
 
@@ -50,3 +50,6 @@ if(resp.status_code == 200):
 
     # Store books as a list
     booksList = [extract_book_data(element) for element in elementsList]
+
+    df = pd.DataFrame(booksList)
+    df.to_csv('books.csv', index=False)
